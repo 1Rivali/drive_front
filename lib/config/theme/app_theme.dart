@@ -10,6 +10,7 @@ ThemeData appTheme() {
       filled: true,
       fillColor: Colors.white,
       hintStyle: const TextStyle(color: Colors.black),
+      prefixIconColor: Colors.black,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(color: Colors.transparent),
