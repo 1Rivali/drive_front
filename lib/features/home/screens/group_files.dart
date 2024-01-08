@@ -3,9 +3,7 @@ import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:drive_front/features/home/cubit/groups/groups_cubit.dart';
 import 'package:drive_front/features/home/cubit/home/home_cubit.dart';
-import 'package:drive_front/features/home/screens/groups.dart';
-import 'package:drive_front/features/home/screens/widgets/dialogs.dart';
-import 'package:drive_front/features/home/screens/widgets/display_files_grid.dart';
+import 'package:drive_front/features/home/cubit/users/user_cubit.dart';
 import 'package:drive_front/utils/widgets/page_decoration.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -23,8 +21,11 @@ class GroupFilesScreen extends StatefulWidget {
 class _GroupFilesScreenState extends State<GroupFilesScreen> {
   final List<int> checkInFiles = [];
   final fileNameController = TextEditingController();
+  final userIdController = TextEditingController();
   @override
   void initState() {
+    context.read<UserCubit>().getGroupUsers(widget.groupId);
+    context.read<GroupsCubit>().getGroupFiles(widget.groupId);
     super.initState();
   }
 
@@ -42,39 +43,80 @@ class _GroupFilesScreenState extends State<GroupFilesScreen> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(18),
-              child: BlocProvider(
-                create: (context) =>
-                    GroupsCubit()..getGroupUsers(widget.groupName),
-                child: BlocBuilder<GroupsCubit, GroupsState>(
-                  builder: (context, state) {
-                    if (state is GetGroupUsersLoadingState) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
-                      );
-                    } else if (state is GetGroupUsersSuccessState) {
-                      return ListView.separated(
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              leading: const Icon(Icons.person),
-                              title: Text(state.users[index].userName!),
+              child: Column(
+                children: [
+                  ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              title: const Text("Add user to group"),
+                              content: SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.2,
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    TextFormField(
+                                      controller: userIdController,
+                                      decoration: const InputDecoration(
+                                        hintText: "User Id",
+                                        prefixIcon: Icon(Icons.person),
+                                      ),
+                                    ),
+                                    ElevatedButton.icon(
+                                        onPressed: () => context
+                                            .read<UserCubit>()
+                                            .addUserToGroup(
+                                              userId: userIdController.text,
+                                              groupId: widget.groupId,
+                                            ),
+                                        icon: const Icon(Icons.add),
+                                        label: const Text("Add"))
+                                  ],
+                                ),
+                              ),
                             );
                           },
-                          separatorBuilder: (context, index) {
-                            return const Divider();
-                          },
-                          itemCount: state.users.length);
-                    } else {
-                      return Center(
-                        child: IconButton(
-                          icon: const Icon(Icons.refresh),
-                          onPressed: () => context
-                              .read<GroupsCubit>()
-                              .getGroupUsers(widget.groupName),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                        );
+                      },
+                      icon: const Icon(Icons.person_add),
+                      label: const Text("Add User To Group")),
+                  Expanded(
+                    child: BlocBuilder<UserCubit, UserState>(
+                      builder: (context, state) {
+                        if (state is GetGroupUsersLoadingState) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        } else if (state is GetGroupUsersSuccessState) {
+                          return ListView.separated(
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  leading: const Icon(Icons.person),
+                                  title: Text(state.users[index].userName!),
+                                );
+                              },
+                              separatorBuilder: (context, index) {
+                                return const Divider();
+                              },
+                              itemCount: state.users.length);
+                        } else {
+                          return Center(
+                            child: IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: () => context
+                                  .read<UserCubit>()
+                                  .getGroupUsers(widget.groupId),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -191,180 +233,173 @@ class _GroupFilesScreenState extends State<GroupFilesScreen> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
-                    child: BlocProvider(
-                      lazy: false,
-                      create: (context) =>
-                          GroupsCubit()..getGroupFiles(widget.groupId),
-                      child: BlocBuilder<GroupsCubit, GroupsState>(
-                        builder: (context, state) {
-                          bool isLoading = state is GetGroupFilesLoadingState;
-                          bool isError = state is GetGroupFilesFailureState;
-                          bool isSuccess = state is GetGroupFilesSuccessState;
-                          if (isLoading) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (isError) {
-                            return Center(
-                              child: IconButton(
-                                icon: const Icon(Icons.refresh),
-                                onPressed: () => context
-                                    .read<GroupsCubit>()
-                                    .getGroupFiles(widget.groupId),
-                              ),
-                            );
-                          }
-                          if (isSuccess) {
-                            return Column(
-                              children: [
-                                if (checkInFiles.isNotEmpty)
-                                  ElevatedButton.icon(
-                                      onPressed: () {
-                                        log(checkInFiles.toString());
-                                        context
-                                            .read<GroupsCubit>()
-                                            .checkInFiles(
-                                              checkInFiles,
-                                              widget.groupId,
-                                            );
-                                      },
-                                      icon: const Icon(Icons.check),
-                                      label: const Text('Check In')),
-                                Expanded(
-                                  child: GridView.builder(
-                                    itemCount: state.files.length,
-                                    gridDelegate:
-                                        const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 5,
-                                      crossAxisSpacing: 20.0,
-                                      mainAxisSpacing: 20.0,
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      var file = state.files[index];
-                                      return InkWell(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (context) => AlertDialog(
-                                              title: Text(file.nameFile!),
-                                              content: SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    0.3,
-                                                child: Column(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Column(
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text("id:\t${file.id}"),
-                                                        Text(
-                                                            "name:\t${file.name}"),
-                                                        Text(
-                                                            "state:\t${file.state}"),
-                                                        Text(
-                                                            "user checked in:\t${file.userNameCheckIn}"),
-                                                        Text(
-                                                            "upload date:\t${file.uploadDate}"),
-                                                        Text(
-                                                            "update date:\t${file.updateDate}"),
-                                                      ],
-                                                    ),
-                                                    Column(
-                                                      children: [
-                                                        ElevatedButton.icon(
-                                                          onPressed: () => context
-                                                              .read<
-                                                                  GroupsCubit>()
-                                                              .checkOutFile(
-                                                                  file.id!),
-                                                          icon: const Icon(
-                                                              Icons.cancel),
-                                                          label: const Text(
-                                                              "Check out"),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 5,
-                                                        ),
-                                                        ElevatedButton.icon(
-                                                          onPressed: () {
-                                                            context
-                                                                .read<
-                                                                    HomeCubit>()
-                                                                .downloadFile(
-                                                                    file.id!,
-                                                                    file.name!,
-                                                                    "");
-                                                          },
-                                                          icon: const Icon(Icons
-                                                              .file_download),
-                                                          label: const Text(
-                                                              "Download"),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
+                    child: BlocBuilder<GroupsCubit, GroupsState>(
+                      builder: (context, state) {
+                        bool isLoading = state is GetGroupFilesLoadingState;
+                        bool isError = state is GetGroupFilesFailureState;
+                        bool isSuccess = state is GetGroupFilesSuccessState;
+                        if (isLoading) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (isError) {
+                          return Center(
+                            child: IconButton(
+                              icon: const Icon(Icons.refresh),
+                              onPressed: () => context
+                                  .read<GroupsCubit>()
+                                  .getGroupFiles(widget.groupId),
+                            ),
+                          );
+                        }
+                        if (isSuccess) {
+                          return Column(
+                            children: [
+                              if (checkInFiles.isNotEmpty)
+                                ElevatedButton.icon(
+                                    onPressed: () {
+                                      log(checkInFiles.toString());
+                                      context.read<GroupsCubit>().checkInFiles(
+                                            checkInFiles,
+                                            widget.groupId,
+                                          );
+                                    },
+                                    icon: const Icon(Icons.check),
+                                    label: const Text('Check In')),
+                              Expanded(
+                                child: GridView.builder(
+                                  itemCount: state.files.length,
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 5,
+                                    crossAxisSpacing: 20.0,
+                                    mainAxisSpacing: 20.0,
+                                  ),
+                                  itemBuilder: (context, index) {
+                                    var file = state.files[index];
+                                    return InkWell(
+                                      onTap: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text(file.nameFile!),
+                                            content: SizedBox(
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  0.3,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                          "id:\t\t${file.idFile}"),
+                                                      Text(
+                                                          "name:\t\t${file.name}"),
+                                                      Text(
+                                                          "state:\t\t${file.state}"),
+                                                      Text(
+                                                          "uploaded at:\t\t${file.uploadDate}"),
+                                                      Text(
+                                                          "upload date:\t\t${file.uploadDate}"),
+                                                      Text(
+                                                          "update date:\t\t${file.updateDate}"),
+                                                    ],
+                                                  ),
+                                                  Column(
+                                                    children: [
+                                                      ElevatedButton.icon(
+                                                        onPressed: () => context
+                                                            .read<GroupsCubit>()
+                                                            .checkOutFile(
+                                                                file.idFile!,
+                                                                widget.groupId),
+                                                        icon: const Icon(
+                                                            Icons.cancel),
+                                                        label: const Text(
+                                                            "Check out"),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 5,
+                                                      ),
+                                                      ElevatedButton.icon(
+                                                        onPressed: () {
+                                                          context
+                                                              .read<HomeCubit>()
+                                                              .downloadFile(
+                                                                  file.id!,
+                                                                  file.name!,
+                                                                  "");
+                                                        },
+                                                        icon: const Icon(Icons
+                                                            .file_download),
+                                                        label: const Text(
+                                                            "Download"),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          );
-                                        },
-                                        child: GridTile(
-                                          header: Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceAround,
-                                              children: [
-                                                CircleAvatar(
-                                                  radius: 16,
-                                                  backgroundColor:
-                                                      file.state! == "check-out"
-                                                          ? Colors.green
-                                                          : Colors.red,
-                                                ),
-                                                if (file.state == "check-out")
-                                                  Checkbox(
-                                                    value: file.isChecked,
-                                                    onChanged: (value) {
-                                                      file.isChecked = value;
-                                                      setState(() {
-                                                        if (value == true) {
-                                                          checkInFiles
-                                                              .add(file.id!);
-                                                        }
-                                                        if (value == false) {
-                                                          checkInFiles
-                                                              .remove(file.id);
-                                                        }
-                                                      });
-                                                    },
-                                                  ),
-                                              ],
-                                            ),
                                           ),
-                                          footer: Center(
-                                              child: Text(file.nameFile!)),
-                                          child: const Image(
-                                            image: AssetImage(
-                                                'assets/images/file.png'),
+                                        );
+                                      },
+                                      child: GridTile(
+                                        header: Center(
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceAround,
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 16,
+                                                backgroundColor:
+                                                    file.state! == "check-out"
+                                                        ? Colors.green
+                                                        : Colors.red,
+                                              ),
+                                              if (file.state == "check-out")
+                                                Checkbox(
+                                                  value: file.isChecked,
+                                                  onChanged: (value) {
+                                                    file.isChecked = value;
+                                                    setState(() {
+                                                      if (value == true) {
+                                                        checkInFiles
+                                                            .add(file.idFile!);
+                                                      }
+                                                      if (value == false) {
+                                                        checkInFiles.remove(
+                                                            file.idFile);
+                                                      }
+                                                    });
+                                                  },
+                                                ),
+                                            ],
                                           ),
                                         ),
-                                      );
-                                    },
-                                  ),
+                                        footer:
+                                            Center(child: Text(file.nameFile!)),
+                                        child: const Image(
+                                          image: AssetImage(
+                                              'assets/images/file.png'),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ],
-                            );
-                          }
-                          return const SizedBox();
-                        },
-                      ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const SizedBox();
+                      },
                     ),
                   ),
                 )

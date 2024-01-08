@@ -26,7 +26,7 @@ class LoginCubit extends Cubit<LoginState> {
       await CacheHelper.setString(key: 'id', value: resUser.id!.toString());
 
       emit(LoginSuccessState());
-    } on DioException catch (e) {
+    } on DioException {
       emit(LoginFailureState());
     }
   }

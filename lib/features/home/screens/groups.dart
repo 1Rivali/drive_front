@@ -45,7 +45,7 @@ class _GroupsState extends State<Groups> {
               builder: (context, state) {
                 bool isLoading = state is GetMyGroupsLoadingState;
                 bool isError = state is GetMyGroupsFailureState;
-                bool isSuccess = state is GetMyGroupsSuccessState;
+
                 if (isLoading) {
                   return const Center(
                     child: CircularProgressIndicator(),
@@ -60,31 +60,29 @@ class _GroupsState extends State<Groups> {
                     ),
                   );
                 }
-                if (isSuccess) {
-                  return ListView.separated(
-                      itemBuilder: (context, index) {
-                        return SizedBox(
-                          width: 200,
-                          child: ListTile(
-                            onTap: () =>
-                                Navigator.of(context).push(MaterialPageRoute(
-                              builder: (context) => GroupFilesScreen(
-                                groupId: state.groups[index].idGroup!,
-                                groupName: state.groups[index].nameGroup!,
-                              ),
-                            )),
-                            title: Text(state.groups[index].nameGroup!),
-                            leading: const Icon(Icons.group),
-                            trailing: Text(state.groups[index].userAdmin!),
-                          ),
-                        );
-                      },
-                      separatorBuilder: (context, index) {
-                        return const Divider();
-                      },
-                      itemCount: state.groups.length);
-                }
-                return const SizedBox();
+                var groups = GroupsCubit().get(context).finalGroups;
+                return ListView.separated(
+                    itemBuilder: (context, index) {
+                      return SizedBox(
+                        width: 200,
+                        child: ListTile(
+                          onTap: () =>
+                              Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) => GroupFilesScreen(
+                              groupId: groups[index].idGroup!,
+                              groupName: groups[index].nameGroup!,
+                            ),
+                          )),
+                          title: Text(groups[index].nameGroup!),
+                          leading: const Icon(Icons.group),
+                          trailing: Text(groups[index].userAdmin!),
+                        ),
+                      );
+                    },
+                    separatorBuilder: (context, index) {
+                      return const Divider();
+                    },
+                    itemCount: groups.length);
               },
             ),
           ),

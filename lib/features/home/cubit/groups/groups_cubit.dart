@@ -11,6 +11,7 @@ part 'groups_state.dart';
 
 class GroupsCubit extends Cubit<GroupsState> {
   GroupsCubit() : super(GroupsInitial());
+  GroupsCubit get(context) => BlocProvider.of(context);
 
   void createGroup(String gorupName) async {
     try {
@@ -19,11 +20,14 @@ class GroupsCubit extends Cubit<GroupsState> {
         "name": gorupName,
       });
       emit(CreateGroupSuccessState());
-    } on DioException catch (e) {
+    } on DioException {
       emit(CreateGroupFailureState());
+    } finally {
+      getMyGroups();
     }
   }
 
+  List<GroupModel> finalGroups = [];
   void getMyGroups() async {
     try {
       emit(GetMyGroupsLoadingState());
@@ -35,6 +39,7 @@ class GroupsCubit extends Cubit<GroupsState> {
           .map((dynamic group) =>
               GroupModel.fromJson(group as Map<String, dynamic>))
           .toList();
+      finalGroups = groups;
       emit(GetMyGroupsSuccessState(groups: groups));
     } catch (e) {
       emit(GetMyGroupsFailureState());
@@ -52,24 +57,8 @@ class GroupsCubit extends Cubit<GroupsState> {
               GroupFileModel.fromJson(file as Map<String, dynamic>))
           .toList();
       emit(GetGroupFilesSuccessState(files: files));
-    } on DioException catch (e) {
+    } on DioException {
       emit(GetGroupFilesFailureState());
-    }
-  }
-
-  void getGroupUsers(String groupName) async {
-    try {
-      emit(GetGroupUsersLoadingState());
-      Response<dynamic>? response = await DioHelper.postAuthorized(
-          path: '/group/users', data: {"name": groupName});
-      List<dynamic> userData = response!.data;
-      List<GroupUserModel> users = userData
-          .map((dynamic user) =>
-              GroupUserModel.fromJson(user as Map<String, dynamic>))
-          .toList();
-      emit(GetGroupUsersSuccessState(users: users));
-    } on DioException catch (e) {
-      emit(GetGroupUsersFailureState());
     }
   }
 
@@ -86,22 +75,24 @@ class GroupsCubit extends Cubit<GroupsState> {
       });
       await DioHelper.postAuthorized(path: '/file/group/create', data: data);
       emit(CreateGroupFileSuccessState());
-    } on DioException catch (e) {
+    } on DioException {
       emit(CreateGroupFileFailureState());
     } finally {
       getGroupFiles(groupId);
     }
   }
 
-  void checkOutFile(int id) async {
+  void checkOutFile(int id, int groupId) async {
     try {
       emit(CheckOutFileLoadingState());
       await DioHelper.postAuthorized(
           path: '/file/check-out', data: {"id_file": id.toString()});
 
       emit(CheckOutFileSuccessState());
-    } on DioException catch (e) {
+    } on DioException {
       emit(CheckOutFileFailureState());
+    } finally {
+      getGroupFiles(groupId);
     }
   }
 
@@ -112,6 +103,7 @@ class GroupsCubit extends Cubit<GroupsState> {
           path: '/file/bulk-check-in', data: {"ids": ids.toString()});
       emit(CheckInFileSuccessState());
     } on DioException catch (e) {
+      print(e);
       emit(CheckInFileFailureState());
     } finally {
       getGroupFiles(groupId);

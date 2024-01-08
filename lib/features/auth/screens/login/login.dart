@@ -1,6 +1,4 @@
-import 'package:drive_front/config/theme/app_theme.dart';
 import 'package:drive_front/features/auth/cubit/login/login_cubit.dart';
-import 'package:drive_front/features/home/screens/home.dart';
 import 'package:drive_front/utils/widgets/page_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

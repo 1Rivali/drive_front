@@ -31,16 +31,6 @@ class GetGroupFilesSuccessState extends GroupsState {
 
 class GetGroupFilesFailureState extends GroupsState {}
 
-class GetGroupUsersLoadingState extends GroupsState {}
-
-class GetGroupUsersSuccessState extends GroupsState {
-  final List<GroupUserModel> users;
-
-  GetGroupUsersSuccessState({required this.users});
-}
-
-class GetGroupUsersFailureState extends GroupsState {}
-
 class CreateGroupFileLoadingState extends GroupsState {}
 
 class CreateGroupFileSuccessState extends GroupsState {}

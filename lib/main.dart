@@ -5,6 +5,7 @@ import 'package:drive_front/features/auth/screens/login/login.dart';
 import 'package:drive_front/features/auth/screens/signup/signup.dart';
 import 'package:drive_front/features/home/cubit/groups/groups_cubit.dart';
 import 'package:drive_front/features/home/cubit/home/home_cubit.dart';
+import 'package:drive_front/features/home/cubit/users/user_cubit.dart';
 import 'package:drive_front/features/home/screens/group_files.dart';
 import 'package:drive_front/features/home/screens/home.dart';
 import 'package:drive_front/utils/storage/cache_helper.dart';
@@ -35,6 +36,10 @@ class MyApp extends StatelessWidget {
           lazy: false,
           create: (context) => GroupsCubit(),
         ),
+        BlocProvider(
+          lazy: false,
+          create: (context) => UserCubit(),
+        )
       ],
       child: MaterialApp(
         title: "Drive",
