@@ -8,14 +8,15 @@ ThemeData appTheme() {
     scaffoldBackgroundColor: Colors.transparent,
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Colors.grey,
+      labelStyle: const TextStyle(color: Colors.black),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
         borderSide: const BorderSide(color: Colors.transparent),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: BorderSide(color: ThemeData.light().primaryColor),
+        borderSide: BorderSide(color: ThemeData.dark().primaryColor),
       ),
     ),
   );
