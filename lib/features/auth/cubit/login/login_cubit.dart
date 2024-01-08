@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:drive_front/features/auth/model/auth.dart';
 import 'package:drive_front/utils/storage/cache_helper.dart';
@@ -29,7 +27,6 @@ class LoginCubit extends Cubit<LoginState> {
 
       emit(LoginSuccessState());
     } on DioException catch (e) {
-      print("response: ${e.response}");
       emit(LoginFailureState());
     }
   }

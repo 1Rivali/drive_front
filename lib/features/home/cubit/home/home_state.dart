@@ -15,6 +15,16 @@ class GetMyFilesSuccessState extends HomeState {
 
 class GetMyFilesFailureState extends HomeState {}
 
+class GetPublicFilesLoadingState extends HomeState {}
+
+class GetPublicFilesSuccessState extends HomeState {
+  final List<FileModel> files;
+
+  GetPublicFilesSuccessState({required this.files});
+}
+
+class GetPublicFilesFailureState extends HomeState {}
+
 class CreatePublicFileLoadingState extends HomeState {}
 
 class CreatePublicFileSuccessState extends HomeState {}

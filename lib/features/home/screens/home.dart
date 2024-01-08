@@ -1,5 +1,8 @@
-import 'package:drive_front/features/home/cubit/home_cubit.dart';
-import 'package:drive_front/features/home/screens/widgets/myfiles.dart';
+import 'package:drive_front/features/home/cubit/groups/groups_cubit.dart';
+import 'package:drive_front/features/home/cubit/home/home_cubit.dart';
+import 'package:drive_front/features/home/screens/groups.dart';
+import 'package:drive_front/features/home/screens/myfiles.dart';
+import 'package:drive_front/features/home/screens/public.dart';
 import 'package:drive_front/utils/storage/cache_helper.dart';
 import 'package:drive_front/utils/widgets/page_decoration.dart';
 import 'package:flutter/material.dart';
@@ -15,18 +18,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _screens = [
-    MyFilesScreen(),
-    Container(),
-    Container(),
+    const MyFilesScreen(),
+    const Public(),
+    const Groups(),
   ];
 
   int _selectedIndex = 0;
   final String? name = CacheHelper.getData(key: 'name');
-  @override
-  void initState() {
-    context.read<HomeCubit>().getMyFiles();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {

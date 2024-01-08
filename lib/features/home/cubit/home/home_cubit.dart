@@ -27,7 +27,26 @@ class HomeCubit extends Cubit<HomeState> {
     }
   }
 
-  void createPublicFile({required MultipartFile file, String? fileName}) async {
+  void getPublicFiles() async {
+    try {
+      emit(GetPublicFilesLoadingState());
+      Response<dynamic>? response =
+          await DioHelper.postAuthorized(path: '/file/public');
+      List<dynamic> filesData = response!.data['date'];
+      List<FileModel> files = filesData
+          .map((dynamic file) =>
+              FileModel.fromJson(file as Map<String, dynamic>))
+          .toList();
+      emit(GetPublicFilesSuccessState(files: files));
+    } on DioException catch (e) {
+      emit(GetPublicFilesFailureState());
+    }
+  }
+
+  void createPublicFile(
+      {required MultipartFile file,
+      String? fileName,
+      required String category}) async {
     try {
       emit(CreatePublicFileLoadingState());
       FormData data = FormData.fromMap({
@@ -36,42 +55,57 @@ class HomeCubit extends Cubit<HomeState> {
       });
       await DioHelper.postAuthorized(path: '/file/public/create', data: data);
       emit(CreatePublicFileSuccessState());
-      getMyFiles();
     } on DioException catch (e) {
       emit(CreatePublicFileFailureState());
-      getMyFiles();
+    } finally {
+      if (category == "Public") {
+        getPublicFiles();
+      }
+      if (category == "My") {
+        getMyFiles();
+      }
     }
   }
 
-  void checkInFiles(List ids) async {
+  void checkInFiles(List ids, String category) async {
     try {
       emit(CheckInFileLoadingState());
       await DioHelper.postAuthorized(
           path: '/file/bulk-check-in', data: {"ids": ids.toString()});
 
       emit(CheckInFileSuccessState());
-      getMyFiles();
     } on DioException catch (e) {
       emit(CheckInFileFailureState());
-      getMyFiles();
+    } finally {
+      if (category == "Public") {
+        getPublicFiles();
+      }
+      if (category == "My") {
+        getMyFiles();
+      }
     }
   }
 
-  void checkOutFile(int id) async {
+  void checkOutFile(int id, String category) async {
     try {
       emit(CheckOutFileLoadingState());
       await DioHelper.postAuthorized(
           path: '/file/check-out', data: {"id_file": id.toString()});
 
       emit(CheckOutFileSuccessState());
-      getMyFiles();
     } on DioException catch (e) {
       emit(CheckOutFileFailureState());
-      getMyFiles();
+    } finally {
+      if (category == "Public") {
+        getPublicFiles();
+      }
+      if (category == "My") {
+        getMyFiles();
+      }
     }
   }
 
-  void downloadFile(int id, String name) async {
+  void downloadFile(int id, String name, String category) async {
     try {
       emit(DownloadFileLoadingState());
       final response = await DioHelper.postAuthorized(
@@ -89,10 +123,15 @@ class HomeCubit extends Cubit<HomeState> {
       html.document.body!.children.remove(anchor);
       anchor.click();
       emit(DownloadFileSuccessState());
-      getMyFiles();
     } catch (e) {
       emit(DownloadFileFailureState());
-      getMyFiles();
+    } finally {
+      if (category == "Public") {
+        getPublicFiles();
+      }
+      if (category == "My") {
+        getMyFiles();
+      }
     }
   }
 }
